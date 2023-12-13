@@ -365,12 +365,12 @@ ae2[
 `r if(is.character(params$data4)){knitr::asis_output("# **DE Review**")}`
 
 `r if(is.character(params$data4)){htmltools::a("Device Incident Report",href = gsub("\\\\", "/", r"(\\oneabbott.com\dept\ADC\Technical_OPS\Clinical_Affairs\Clinical Study Files\Sensor Systems\ADC-US-RES-23238_InHouse Sensor\Case Report Forms\pdf\DIR 13.pdf)"))}`
-
 ```{r Load de, eval = is.character(params$data4)}
-# de <- read_sas(gsub("\\\\","/",r"(\\wf00168p.oneabbott.com\data1\CDM\ADC-US-RES-23238\OpenClinicaExtract\Current\001\de.sas7bdat)"))
+# de <- read_sas(gsub("\\\\","/",r"(\\wf00168p.oneabbott.com\data1\CDM\ADC-US-RES-23238\OpenClinicaExtract\Current\006\de.sas7bdat)"))
 de <- read_sas(params$data4)
 de <- de %>%
       filter(!str_detect(DEYN01,regex("CHECK HERE IF NO DATA RECORDED|no_data_recorded",ignore_case = T))) %>%
+      mutate(across(c(DESPID01,DESPID14,DESPID15), ~ na_if(.x,""))) %>% 
       # mutate(Subject = as.character(Subject)) %>%
       arrange(Subject)
 ```
@@ -393,6 +393,8 @@ str_detect(de$DETM01,"^$|pattern") & !str_detect(de$DESPID13,regex("Time Unknown
 str_detect(de$DESPID07,"^$|pattern") & str_detect(de$DESPID08,"^$|pattern") & str_detect(de$DESPID09,"^$|pattern") & str_detect(de$DESPID10,"^$|pattern") & str_detect(de$DESPID11,"^$|pattern") & str_detect(de$DESPID12,"^$|pattern") |
 # Reader
 str_detect(de$DESPID07,regex("Reader",ignore_case = T)) & str_detect(de$DESPID01,"^$|pattern") |
+# Length of Sensor Serial Number
+str_detect(de$DESPID07,regex("Reader",ignore_case = T)) &  (str_length(de$DESPID07) != median(str_length(de$DESPID07),na.rm = T)) |
 # Sensor
 (str_detect(de$DESPID08,regex("Sensor",ignore_case = T)) & (str_detect(de$DESPID02,"^$|pattern") | str_detect(de$DESPID14,"^$|pattern") | str_detect(de$DESPID15,"^$|pattern"))) |
 # Length Of Sensor Serial Number
@@ -447,37 +449,39 @@ str_detect(de$DEORES07,"[:alpha:]") & (str_detect(de$DESPID01,"^$|pattern") | st
 
 `r if(is.character(params$data4)){knitr::asis_output("5. DESPID07(Reader) DESPID01(Reader serial number) should not be blank at the same time")}` `r if(is.character(params$data4)){colorize(de[str_detect(de$DESPID07,regex("Reader",ignore_case = T)) & str_detect(de$DESPID01,"^$|pattern"),]$Subject,"red")}`
 
-`r if(is.character(params$data4)){knitr::asis_output("6. If DEORES07(Reader replaced) is not blank, DESPID01(Reader serial number) and DESPID07(Reader) should not be blank at the same time")}` `r if(is.character(params$data4)){colorize(de[str_detect(de$DEORES07,"[:alpha:]") & (str_detect(de$DESPID01,"^$|pattern") | str_detect(de$DESPID07,"^$|pattern")),]$Subject,"red")}`
+`r if(is.character(params$data4)){knitr::asis_output("6. The length of DESPID01(Reader Serial Number) should be")}` `r if(is.character(params$data4)){median(str_length(de$DESPID01),na.rm = T)}` `r if(is.character(params$data4)){colorize(de[str_detect(de$DESPID07,regex("Reader",ignore_case = T)) &  (str_length(de$DESPID01) != median(str_length(de$DESPID01),na.rm = T)),]$Subject,"red")}`
 
-`r if(is.character(params$data4)){knitr::asis_output("7. DESPID08(Sensor) DESPID02(Sensor Number) DESPID14(Sensor Serial Number), and DESPID15(Sensor Lot Number) should not be blank at the same time")}` `r if(is.character(params$data4)){colorize(de[str_detect(de$DESPID08,regex("Sensor",ignore_case = T)) & (str_detect(de$DESPID02,"^$|pattern") | str_detect(de$DESPID14,"^$|pattern") | str_detect(de$DESPID15,"^$|pattern")),]$Subject,"red")}`
+`r if(is.character(params$data4)){knitr::asis_output("7. If DEORES07(Reader replaced) is not blank, DESPID01(Reader serial number) and DESPID07(Reader) should not be blank at the same time")}` `r if(is.character(params$data4)){colorize(de[str_detect(de$DEORES07,"[:alpha:]") & (str_detect(de$DESPID01,"^$|pattern") | str_detect(de$DESPID07,"^$|pattern")),]$Subject,"red")}`
 
-`r if(is.character(params$data4)){knitr::asis_output("8. The length of DESPID14(Sensor Serial Number) should be")}` `r if(is.character(params$data4)){median(str_length(de$DESPID14),na.rm = T)}` `r if(is.character(params$data4)){colorize(de[str_detect(de$DESPID08,regex("Sensor",ignore_case = T)) & (str_length(de$DESPID14) != median(str_length(de$DESPID14),na.rm = T)),]$Subject,"red")}`
+`r if(is.character(params$data4)){knitr::asis_output("8. DESPID08(Sensor) DESPID02(Sensor Number) DESPID14(Sensor Serial Number), and DESPID15(Sensor Lot Number) should not be blank at the same time")}` `r if(is.character(params$data4)){colorize(de[str_detect(de$DESPID08,regex("Sensor",ignore_case = T)) & (str_detect(de$DESPID02,"^$|pattern") | str_detect(de$DESPID14,"^$|pattern") | str_detect(de$DESPID15,"^$|pattern")),]$Subject,"red")}`
 
-`r if(is.character(params$data4)){knitr::asis_output("9. If DEORES05(Sensor Removed) or  DEORES06(Sensor Replaced) is not blank, DESPID02(Sensor Number),DESPID08(Sensor),DESPID14(Sensor Serial Number),and DESPID15(Sensor Lot Number) should not be blank at the same time")}` `r if(is.character(params$data4)){colorize(de[(str_detect(de$DEORES05,"[:alpha:]") | str_detect(de$DEORES06,"[:alpha:]")) & (str_detect(de$DESPID02,"^$|pattern") | str_detect(de$DESPID08,"^$|pattern") | str_detect(de$DESPID14,"^$|pattern") | str_detect(de$DESPID15,"^$|pattern")),]$Subject,"red")}`
+`r if(is.character(params$data4)){knitr::asis_output("9. The length of DESPID14(Sensor Serial Number) should be")}` `r if(is.character(params$data4)){median(str_length(de$DESPID14),na.rm = T)}` `r if(is.character(params$data4)){colorize(de[str_detect(de$DESPID08,regex("Sensor",ignore_case = T)) & (str_length(de$DESPID14) != median(str_length(de$DESPID14),na.rm = T)),]$Subject,"red")}`
 
-`r if(is.character(params$data4)){knitr::asis_output("10. DESPID12(Other) DESPID06(Others Please Specify) should not be blank at the same time")}` `r if(is.character(params$data4)){colorize(de[str_detect(de$DESPID12,regex("Other",ignore_case = T)) & str_detect(de$DESPID06,"^$|pattern"),]$Subject,"red")}`
+`r if(is.character(params$data4)){knitr::asis_output("10. If DEORES05(Sensor Removed) or  DEORES06(Sensor Replaced) is not blank, DESPID02(Sensor Number),DESPID08(Sensor),DESPID14(Sensor Serial Number),and DESPID15(Sensor Lot Number) should not be blank at the same time")}` `r if(is.character(params$data4)){colorize(de[(str_detect(de$DEORES05,"[:alpha:]") | str_detect(de$DEORES06,"[:alpha:]")) & (str_detect(de$DESPID02,"^$|pattern") | str_detect(de$DESPID08,"^$|pattern") | str_detect(de$DESPID14,"^$|pattern") | str_detect(de$DESPID15,"^$|pattern")),]$Subject,"red")}`
 
-`r if(is.character(params$data4)){knitr::asis_output("11. DEORES01(Was there a message on the meter/reader at the time of the incident?) should be either Yes or No")}` `r if(is.character(params$data4)){colorize(de[!str_detect(de$DEORES01,regex("Yes|No",ignore_case = T)),]$Subject,"red")}`
+`r if(is.character(params$data4)){knitr::asis_output("11. DESPID12(Other) DESPID06(Others Please Specify) should not be blank at the same time")}` `r if(is.character(params$data4)){colorize(de[str_detect(de$DESPID12,regex("Other",ignore_case = T)) & str_detect(de$DESPID06,"^$|pattern"),]$Subject,"red")}`
 
-`r if(is.character(params$data4)){knitr::asis_output("12. If DEORES01(Was there a message on the meter/reader at the time of the incident?) is Yes, DETXT02(Yes - Message:) should not be blank")}` `r if(is.character(params$data4)){colorize(de[str_detect(de$DEORES01,regex("Yes",ignore_case = T)) & str_detect(de$DETXT02,"^$|pattern"),]$Subject,"red")}`
+`r if(is.character(params$data4)){knitr::asis_output("12. DEORES01(Was there a message on the meter/reader at the time of the incident?) should be either Yes or No")}` `r if(is.character(params$data4)){colorize(de[!str_detect(de$DEORES01,regex("Yes|No",ignore_case = T)),]$Subject,"red")}`
 
-`r if(is.character(params$data4)){knitr::asis_output("13. DEORES02(Describe the incident) and DEORES03(What was the subject/staff doing at the time the incident occurred?) should not be blank")}` `r if(is.character(params$data4)){colorize(de[str_detect(de$DEORES02,"^$|pattern") | str_detect(de$DEORES03,"^$|pattern"),]$Subject,"red")}`
+`r if(is.character(params$data4)){knitr::asis_output("13. If DEORES01(Was there a message on the meter/reader at the time of the incident?) is Yes, DETXT02(Yes - Message:) should not be blank")}` `r if(is.character(params$data4)){colorize(de[str_detect(de$DEORES01,regex("Yes",ignore_case = T)) & str_detect(de$DETXT02,"^$|pattern"),]$Subject,"red")}`
 
-`r if(is.character(params$data4)){knitr::asis_output("14. DEORES04(Did the incident occur more than once?) should be either Yes or No")}` `r if(is.character(params$data4)){colorize(de[!str_detect(de$DEORES04,regex("Yes|No",ignore_case = T)),]$Subject,"red")}`
+`r if(is.character(params$data4)){knitr::asis_output("14. DEORES02(Describe the incident) and DEORES03(What was the subject/staff doing at the time the incident occurred?) should not be blank")}` `r if(is.character(params$data4)){colorize(de[str_detect(de$DEORES02,"^$|pattern") | str_detect(de$DEORES03,"^$|pattern"),]$Subject,"red")}`
 
-`r if(is.character(params$data4)){knitr::asis_output("15. If DEORES04(Did the incident occur more than once?) is yes, DETXT03(Yes-how many times?) should not be blank")}` `r if(is.character(params$data4)){colorize(de[str_detect(de$DEORES04,regex("Yes",ignore_case = T)) & str_detect(de$DETXT03,"^$|pattern"),]$Subject,"red")}`
+`r if(is.character(params$data4)){knitr::asis_output("15. DEORES04(Did the incident occur more than once?) should be either Yes or No")}` `r if(is.character(params$data4)){colorize(de[!str_detect(de$DEORES04,regex("Yes|No",ignore_case = T)),]$Subject,"red")}`
 
-`r if(is.character(params$data4)){knitr::asis_output("16. DEORES05(Sensor removed) or DEORES06(Sensor replaced) or DEORES07(Reader replaced) DEORES08(No action taken) DEORES09(other) should not be blank at the same time")}` `r if(is.character(params$data4)){colorize(de[str_detect(de$DEORES05,"^$|pattern") & str_detect(de$DEORES06,"^$|pattern") & str_detect(de$DEORES07,"^$|pattern") & str_detect(de$DEORES08,"^$|pattern") & str_detect(de$DEORES09,"^$|pattern"),]$Subject,"red")}`
+`r if(is.character(params$data4)){knitr::asis_output("16. If DEORES04(Did the incident occur more than once?) is yes, DETXT03(Yes-how many times?) should not be blank")}` `r if(is.character(params$data4)){colorize(de[str_detect(de$DEORES04,regex("Yes",ignore_case = T)) & str_detect(de$DETXT03,"^$|pattern"),]$Subject,"red")}`
 
-`r if(is.character(params$data4)){knitr::asis_output("17. If DEORES09(other) is Other, DETXT04 should not be blank")}` `r if(is.character(params$data4)){colorize(de[str_detect(str_to_lower(de$DEORES09),regex("Other",ignore_case = T)) & str_detect(de$DETXT04,"^$|pattern"),]$Subject,"red")}`
+`r if(is.character(params$data4)){knitr::asis_output("17. DEORES05(Sensor removed) or DEORES06(Sensor replaced) or DEORES07(Reader replaced) DEORES08(No action taken) DEORES09(other) should not be blank at the same time")}` `r if(is.character(params$data4)){colorize(de[str_detect(de$DEORES05,"^$|pattern") & str_detect(de$DEORES06,"^$|pattern") & str_detect(de$DEORES07,"^$|pattern") & str_detect(de$DEORES08,"^$|pattern") & str_detect(de$DEORES09,"^$|pattern"),]$Subject,"red")}`
 
-`r if(is.character(params$data4)){knitr::asis_output("18. DEORES21(Could the part(s) involved in this incident continue to be used successfully?) should not be blank")}` `r if(is.character(params$data4)){colorize(de[str_detect(de$DEORES21,"^$|pattern"),]$Subject,"red")}`
+`r if(is.character(params$data4)){knitr::asis_output("18. If DEORES09(other) is Other, DETXT04 should not be blank")}` `r if(is.character(params$data4)){colorize(de[str_detect(str_to_lower(de$DEORES09),regex("Other",ignore_case = T)) & str_detect(de$DETXT04,"^$|pattern"),]$Subject,"red")}`
 
-`r if(is.character(params$data4)){knitr::asis_output("19. DEORES10(Did the incident result in an Adverse Event?) should be either Yes or No")}` `r if(is.character(params$data4)){colorize(de[!str_detect(de$DEORES10,regex("Yes|No",ignore_case = T)),]$Subject,"red")}`
+`r if(is.character(params$data4)){knitr::asis_output("19. DEORES21(Could the part(s) involved in this incident continue to be used successfully?) should not be blank")}` `r if(is.character(params$data4)){colorize(de[str_detect(de$DEORES21,"^$|pattern"),]$Subject,"red")}`
 
-`r if(is.character(params$data4)){knitr::asis_output("20. DEORES11(Could the incident have led to a Serious Adverse Event?) should be either Yes or No")}` `r if(is.character(params$data4)){colorize(de[!str_detect(de$DEORES11,regex("Yes|No",ignore_case = T)),]$Subject,"red")}`
+`r if(is.character(params$data4)){knitr::asis_output("20. DEORES10(Did the incident result in an Adverse Event?) should be either Yes or No")}` `r if(is.character(params$data4)){colorize(de[!str_detect(de$DEORES10,regex("Yes|No",ignore_case = T)),]$Subject,"red")}`
 
-`r if(is.character(params$data4)){knitr::asis_output("21. DEORES12(Did the incident fit any of the events listed below?) should be either Yes or No")}` `r if(is.character(params$data4)){colorize(de[!str_detect(de$DEORES12,regex("Yes|No",ignore_case = T)),]$Subject,"red")}`
+`r if(is.character(params$data4)){knitr::asis_output("21. DEORES11(Could the incident have led to a Serious Adverse Event?) should be either Yes or No")}` `r if(is.character(params$data4)){colorize(de[!str_detect(de$DEORES11,regex("Yes|No",ignore_case = T)),]$Subject,"red")}`
+
+`r if(is.character(params$data4)){knitr::asis_output("22. DEORES12(Did the incident fit any of the events listed below?) should be either Yes or No")}` `r if(is.character(params$data4)){colorize(de[!str_detect(de$DEORES12,regex("Yes|No",ignore_case = T)),]$Subject,"red")}`
 
 <!-- # DM Review -->
 `r if(is.character(params$data5)){knitr::asis_output("# **DM Review**")}`
