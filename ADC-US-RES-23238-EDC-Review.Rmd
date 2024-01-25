@@ -139,7 +139,7 @@ colorize <- function(x, color) {
 `r if(is.character(params$data1)){htmltools::a("Adverse Event Report",href = gsub("\\\\", "/", r"(\\oneabbott.com\dept\ADC\Technical_OPS\Clinical_Affairs\Clinical Study Files\Sensor Systems\ADC-US-RES-23238_InHouse Sensor\Case Report Forms\pdf\AE 14.pdf)"))}`
 
 ```{r Load ae1, eval = is.character(params$data1)}
-# ae1 <- read_sas(gsub("\\\\","/",r"(\\wf00168p.oneabbott.com\data1\CDM\ADC-US-RES-23238\OpenClinicaExtract\Current\001\ae1.sas7bdat)"))
+# ae1 <- read_sas(gsub("\\\\","/",r"(\\wf00168p.oneabbott.com\data1\CDM\ADC-US-RES-23238\OpenClinicaExtract\Current\010\ae1.sas7bdat)"))
 ae1 <- read_sas(params$data1)
 ae1 <- ae1 %>%
        filter(!str_detect(AEYN01,regex("CHECK HERE IF NO DATA RECORDED|no_data_recorded",ignore_case = T))) %>%
@@ -284,7 +284,7 @@ str_length(ae1$AEDTC03) != median(str_length(ae1$AEDTC03),na.rm = T) | is.na(ae1
 
 `r if(is.character(params$data1)){knitr::asis_output("26. If AEDUR01(Outcome) is Resolved or resolved with sequelae or Death, AEENDT01(Outcome date) should not be blank")}` `r if(is.character(params$data1)){colorize(ae1[(str_detect(ae1$AEDUR01,regex("Resolved or resolved with sequelae|Death",ignore_case = T)) & (is.na(ae1$AEENDT01) | str_detect(ae1$AEENDT01,"^$|pattern"))),]$Subject,"red")}`
 
-`r if(is.character(params$data1)){knitr::asis_output("27. If AEDUR01(Outcome) is Resolved or resolved with sequelae or Death, Length of AEENDT01(Outcome date) should be")}` `r if(is.character(params$data1)){median(str_length(ae1$AEENDT01),na.rm = T)}` `r if(is.character(params$data1)){colorize(ae1[(str_detect(ae1$AEDUR01,regex("Resolved or resolved with sequelae|Death",ignore_case = T)) & str_length(ae1$AEENDT01) != median(str_length(ae1$AEENDT01),na.rm = T)) | is.na(ae1$AEENDT01),]$Subject,"red")}`
+`r if(is.character(params$data1)){knitr::asis_output("27. If AEDUR01(Outcome) is Resolved or resolved with sequelae or Death, Length of AEENDT01(Outcome date) should be")}` `r if(is.character(params$data1)){median(str_length(ae1$AEENDT01),na.rm = T)}` `r if(is.character(params$data1)){colorize(ae1[(str_detect(ae1$AEDUR01,regex("Resolved or resolved with sequelae|Death",ignore_case = T)) & str_length(ae1$AEENDT01) != median(str_length(ae1$AEENDT01),na.rm = T)),]$Subject,"red")}`
 
 `r if(is.character(params$data1)){knitr::asis_output("28. If AEDUR01(Outcome) is Resolved or resolved with sequelae or Death, AEENTM01(Outcome End Time) and AEENTM02(Outcome End Time Unknown) should be eithr blank or unknown")}` `r if(is.character(params$data1)){colorize(ae1[(str_detect(ae1$AEDUR01,regex("Resolved or resolved with sequelae|Death",ignore_case = T)) & (str_detect(ae1$AEENTM01,"^$|pattern") & !str_detect(ae1$AEENTM02,regex("End Time Unknown",ignore_case = T)))),]$Subject,"red")}`
 
@@ -956,7 +956,7 @@ str_detect(mh$MHORRES2,regex("Yes",ignore_case = T)) & (!str_detect(mh$MHDTC1,re
 `r if(is.character(params$data9)){htmltools::a("Protocol Deviation Report",href = gsub("\\\\", "/", r"(\\oneabbott.com\dept\ADC\Technical_OPS\Clinical_Affairs\Clinical Study Files\Sensor Systems\ADC-US-RES-23238_InHouse Sensor\Case Report Forms\pdf\pd 15.pdf)"))}`
 
 ```{r Load pd, eval = is.character(params$data9)}
-# pd <- read_sas(gsub("\\\\","/",r"(\\wf00168p.oneabbott.com\data1\CDM\ADC-US-RES-23238\OpenClinicaExtract\Current\001\pd.sas7bdat)"))
+# pd <- read_sas(gsub("\\\\","/",r"(\\wf00168p.oneabbott.com\data1\CDM\ADC-US-RES-23238\OpenClinicaExtract\Current\010\pd.sas7bdat)"))
 pd <- read_sas(params$data9)
 pd <- pd %>% 
       filter(!str_detect(DVYN,regex("CHECK HERE IF NO DATA RECORDED|no_data_recorded",ignore_case = T))) %>%
