@@ -17,14 +17,14 @@ library(haven)
 ```
 
 ```{r Load ae1}
-ae1 <- read_sas(gsub("\\\\","/",r"(\\wf00168p.oneabbott.com\data1\CDM\ADC-US-RES-23238\OpenClinicaExtract\Current\014\ae1.sas7bdat)"))
+ae1 <- read_sas(gsub("\\\\","/",r"(\\wf00168p.oneabbott.com\data1\CDM\ADC-US-RES-23238\OpenClinicaExtract\Current\009\ae1.sas7bdat)"))
 ae1 <- ae1 %>%
        filter(!str_detect(AEYN01,regex("CHECK HERE IF NO DATA RECORDED|no_data_recorded",ignore_case = T))) %>%
        # mutate(Subject = as.character(Subject)) %>%
        arrange(Subject)
 ```
 
-```{r}
+```{r Check AE}
 ae1 |> 
    mutate(Status_AESER01 = case_when(
             !str_detect(AESER01,regex("Yes|No",ignore_case = T)) ~ "AESER01 should be either Yes or No",
@@ -54,7 +54,7 @@ ae1 |>
             .default = ""),
           Status_AECOM01 = case_when(
              str_detect(AEORES01,regex("No",ignore_case = T)) &
-             !str_detect(AECOM01,"^$|pattern")
+             str_detect(AECOM01,"^$|pattern")
                ~ "If AEORES01 is No, AECOM01 should not be blank",
             .default = ""),
           # If AEORES01 is Yes
