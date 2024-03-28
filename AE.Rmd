@@ -1,0 +1,150 @@
+---
+title: "AE Form"
+author: "Alvin, Lin"
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r Libaray Packages, message = FALSE}
+library(tidyverse)
+library(openxlsx)
+library(htmltools)
+library(reactable)
+library(haven)
+```
+
+```{r Load ae1}
+ae1 <- read_sas(gsub("\\\\","/",r"(\\wf00168p.oneabbott.com\data1\CDM\ADC-US-RES-23238\OpenClinicaExtract\Current\014\ae1.sas7bdat)"))
+ae1 <- ae1 %>%
+       filter(!str_detect(AEYN01,regex("CHECK HERE IF NO DATA RECORDED|no_data_recorded",ignore_case = T))) %>%
+       # mutate(Subject = as.character(Subject)) %>%
+       arrange(Subject)
+```
+
+```{r}
+ae1 |> 
+   mutate(Status_AESER01 = case_when(
+            !str_detect(AESER01,regex("Yes|No",ignore_case = T)) ~ "AESER01 should be either Yes or No",
+            .default = ""),
+          Status_AENUM01 = case_when(
+             is.na(AENUM01) | str_length(AENUM01) != 2 ~ "AENUM01 should not be blank",
+            .default = ""),
+          Status_AEDTC01 = case_when(
+             (is.na(AEDTC01) | str_detect(AEDTC01,"^$|pattern")) | 
+              str_length(AEDTC01) != median(str_length(AEDTC01),na.rm = T)
+               ~ "AEDTC01 should not be blank",
+            .default = ""),
+          Status_AEORES01 = case_when(
+             !str_detect(AEORES01,regex("Yes|No",ignore_case = T))
+               ~ "AEORES01 should be either Yes or No",
+            .default = ""),
+          # If AEORES01 is No
+          Status_AETERM01 = case_when(
+             str_detect(AEORES01,regex("No",ignore_case = T)) & 
+             str_detect(AETERM01,"^$|pattern")
+               ~ "If AEORES01 is No, AETERM01 should not be blank",
+            .default = ""),
+          Status_AEHYPO01 = case_when(
+             str_detect(AEORES01,regex("No",ignore_case = T)) &
+             !str_detect(AEHYPO01,regex("Yes|No",ignore_case = T))
+               ~ "If AEORES01 is No, AEHYPO01 should be either Yes or No",
+            .default = ""),
+          Status_AECOM01 = case_when(
+             str_detect(AEORES01,regex("No",ignore_case = T)) &
+             !str_detect(AECOM01,"^$|pattern")
+               ~ "If AEORES01 is No, AECOM01 should not be blank",
+            .default = ""),
+          # If AEORES01 is Yes
+          Status_AEDESC01 = case_when(
+             str_detect(AEORES01,regex("Yes",ignore_case = T)) & 
+             !str_detect(AEDESC01,regex("erythema|induration|pain|edema|bruising|itching|rash|bleeding|infection|other",ignore_case = T))
+               ~ "If AEORES01 is Yes, AEDESC01 should be erythema, induration, pain, edema, bruising, itching, rash, bleeding, infection, other",
+            .default = ""),
+          ## If AEDESC01 is Other
+          Status_AEDSCO02 = case_when(
+             str_detect(AEDESC01,regex("Other",ignore_case = T)) & 
+             str_detect(AEDSCO02,"^$|pattern")
+               ~ "If AEORES01 is Other, AEDSCO02 should not be blank",
+            .default = ""),
+          # AENUM02
+          Status_AENUM02 = case_when(
+             str_detect(AEDESC01,regex("erythema|induration|edema|bruising|rash|infection",ignore_case = T)) & 
+             (str_detect(AENUM02,"^$|pattern") & str_detect(AEORES02,"^$|pattern")) |
+              str_detect(AEDESC01,regex("erythema|induration|edema|bruising|rash|infection",ignore_case = T)) & (!is.na(AENUM02) & !str_detect(AEORES02,"^$|pattern"))
+               ~ "If AENUM02 is erythema, induration, edema, bruising, rash, infection, AENUM02 and AEORES02 should not be blank at the same time",
+            .default = ""),
+          Status_AEORES02 = case_when(
+             str_detect(AEDESC01,regex("pain|itching|bleeding",ignore_case = T)) & (!str_detect(AENUM02,"^$|pattern") | !str_detect(AEORES02,"NA"))
+               ~ "If AENUM02 is pain, itching, bleeding, AENUM02 should be blank and AEORES02 should be NA",
+            .default = ""),
+          Status_AENUM03 = case_when(
+             str_detect(AEDESC01,regex("erythema|edema",ignore_case = T)) &
+(str_detect(AENUM03,"^$|pattern") & str_detect(AEORES03,"^$|pattern"))  |
+str_detect(AEDESC01,regex("erythema|edema",ignore_case = T)) &
+(!str_detect(AENUM03,"^$|pattern") & !str_detect(AEORES03,"^$|pattern"))
+               ~ "If AEDESC01 is erythema or edema, AENUM03 and AEORES03 should not be blank at the same time",
+            .default = ""),
+          Status_AESTDT01 = case_when(
+             (is.na(AESTDT01) | str_detect(AESTDT01,"^$|pattern"))
+               ~ "AESTDT01 should not be blank",
+            .default = ""),
+          Status_AESTTM01 = case_when(
+             str_detect(AESTTM01,"^$|pattern") & str_detect(AESTTM02,"^$|pattern")
+               ~ "AESTTM01 and AESTTM02 should not be blank at the same time",
+            .default = ""),
+          Status_AESEV01 = case_when(
+             !str_detect(AESEV01,regex("mild|moderate|severe",ignore_case = T))
+               ~ "AESEV01 should be either Mild, Moderate, or Severe",
+            .default = ""),
+          Status_AEREL01 = case_when(
+             !str_detect(AEREL01,regex("Not Related|Possibly Related|Related",ignore_case = T))
+               ~ "AEREL01 should be either Not Related, Possibly Related or Related",
+            .default = ""),
+          Status_AEEVNT01 = case_when(
+             str_detect(AEREL01,"Related|Possibly Related") & (str_detect(AEEVNT01,"^$|pattern") | is.na(AENUM04))
+               ~ "If AESEV01 is Related or Possibly Related, AEEVNT01 and AENUM04 should not be blank at the same time",
+            .default = ""),
+          Status_AEREL02 = case_when(
+             !str_detect(AEREL02,regex("Not Related|Possibly Related|Related",ignore_case = T))
+               ~ "AEREL02 should be either Not Related, Possibly Related or Related",
+            .default = ""),
+          Status_AEEVNT02 = case_when(
+             str_detect(AEREL02,"Related|Possibly Related") & (str_detect(AEEVNT02,"^$|pattern") | is.na(AENUM04))
+               ~ "If AESEV02 is Related or Possibly Related, AEEVNT02 should not be blank",
+            .default = ""),
+          Status_AEORES05 = case_when(
+             !str_detect(AEORES05,regex("Yes|No",ignore_case = T))
+               ~ "AEORES05 should be either Yes or No",
+            .default = ""),
+          Status_AECOM06 = case_when(
+             str_detect(AEORES05,regex("Yes",ignore_case = T)) & str_detect(AECOM06,"^$|pattern")
+               ~ "If AEORES05 is Yes, AECOM06 should not be blank",
+            .default = ""),
+          Status_AEORES06 = case_when(
+             !str_detect(AEORES06,regex("Yes|No",ignore_case = T))
+               ~ "AEORES06 should be either Yes or No",
+            .default = ""),
+          Status_AECOM07 = case_when(
+             str_detect(AEORES06,regex("Yes",ignore_case = T)) & str_detect(AECOM07,"^$|pattern")
+               ~ "If AEORES06 is Yes, AECOM07 should not be blank",
+            .default = ""),
+          Status_AEDUR01 = case_when(
+             !str_detect(AEDUR01,regex("Ongoing|Resolved or resolved with sequelae|Death",ignore_case = T))
+               ~ "AEDUR01 should be either Ongoing, Resolved or resolved with sequelae or Death",
+            .default = ""),
+          Status_AEENDT01 = case_when(
+             str_detect(AEDUR01,regex("Ongoing",ignore_case = T)) & (!is.na(AEENDT01) | !str_detect(AEENTM01,"^$|pattern") | !str_detect(AEENTM02,"^$|pattern"))
+               ~ "If AEDUR01 is Ongoing, AEENDT01 and AEENTM01 and AEENTM02 should be blank",
+             (str_detect(AEDUR01,regex("Resolved or resolved with sequelae|Death",ignore_case = T)) & (is.na(AEENDT01) | str_detect(AEENDT01,"^$|pattern"))) ~ "If AEDUR01 is Resolved or resolved with sequelae or Death, AEENDT01 and AEENTM01 and AEENTM02 should not be blank at the same time",
+            .default = ""),
+          Status_AEDTC03 = case_when(
+             (is.na(AEDTC03) | str_detect(AEDTC03,"^$|pattern"))
+               ~ "AEDTC03 should not be blank",
+            .default = "")) |> 
+        unite("Status",Status_AESER01:Status_AEDTC03,remove = T,sep = "") |> 
+        select(Subject,`__STUDYEVENTREPEATKEY`,`__ITEMGROUPREPEATKEY`,AESER01:last_col()) |> 
+        openxlsx::write.xlsx("AE.xlsx")
+```
