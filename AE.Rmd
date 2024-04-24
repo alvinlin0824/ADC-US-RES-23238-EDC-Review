@@ -9,20 +9,19 @@ knitr::opts_chunk$set(echo = FALSE)
 ```
 
 ```{r Libaray Packages, message = FALSE}
-library(tidyverse)
-library(openxlsx)
-library(htmltools)
-library(reactable)
-library(haven)
+library(tidyverse)  # To handle data            
+library(openxlsx)   # write the data to xlxs
+library(haven)      # read_sas to read sas data
 ```
 
 ```{r Load ae1}
-# ae1 <- read_sas(gsub("\\\\","/",r"(\\wf00168p.oneabbott.com\data1\CDM\ADC-US-RES-23238\OpenClinicaExtract\Current\009\ae1.sas7bdat)"))
-ae1 <- read_sas(gsub("\\\\", "/", r"(\\wf00168p.oneabbott.com\data1\CDM\ADC-US-RES-22225\SE31_Glu\OpenClinica\Current\ae1.sas7bdat)"))
+# ae1 <- read_sas(gsub("\\\\","/",r"(\\wf00168p.oneabbott.com\data1\CDM\ADC-US-RES-23238\OpenClinicaExtract\Current\013\ae1.sas7bdat)"))
+ae1 <- read_sas(gsub("\\\\", "/", r"(\\wf00168p.oneabbott.com\data1\CDM\ADC-US-RES-22225\SE38_Glu\OpenClinica\Current\ae1.sas7bdat)"))
 # ae1 <- read_sas(gsub("\\\\", "/", r"(\\wf00168p.oneabbott.com\data1\CDM\ADC-US-RES-22225\SE23_24_Glu\OpenClinica\Current\ae1.sas7bdat)"))
-ae1 <- ae1 %>%
+ae1 <- ae1 %>%  # Pipe operator, I will interpret pipe as then
+       # Remove rows have check here if no data recorded
        filter(!str_detect(AEYN01,regex("CHECK HERE IF NO DATA RECORDED|no_data_recorded",ignore_case = T))) %>%
-       # mutate(Subject = as.character(Subject)) %>%
+       # sort data by ascending order 
        arrange(Subject)
 ```
 
