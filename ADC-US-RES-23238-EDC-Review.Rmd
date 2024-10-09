@@ -368,7 +368,7 @@ ae2[
 
 `r if(is.character(params$data4)){htmltools::a("Device Incident Report",href = gsub("\\\\", "/", r"(\\oneabbott.com\dept\ADC\Technical_OPS\Clinical_Affairs\Clinical Study Files\Sensor Systems\ADC-US-RES-23238_InHouse Sensor\Case Report Forms\Version B\Pdf\ADC-US-RES-23238_DIR_RevB.pdf)"))}`
 ```{r Load de, eval = is.character(params$data4)}
-# de <- read_sas(gsub("\\\\","/",r"(\\wf00168p.oneabbott.com\data1\CDM\ADC-US-RES-23238\OpenClinicaExtract\Current\014\de.sas7bdat)"))
+# de <- read_sas(gsub("\\\\","/",r"(\\wf00168p.oneabbott.com\data1\CDM\ADC-US-RES-23238\OpenClinicaExtract\Current\024\de.sas7bdat)"))
 de <- read_sas(params$data4)
 de <- de %>%
       filter(!str_detect(DEYN01,regex("CHECK HERE IF NO DATA RECORDED|no_data_recorded",ignore_case = T))) %>%
@@ -395,8 +395,8 @@ str_detect(de$DETM01,"^$|pattern") & !str_detect(de$DESPID13,regex("Time Unknown
 str_detect(de$DESPID07,"^$|pattern") & str_detect(de$DESPID08,"^$|pattern") & str_detect(de$DESPID09,"^$|pattern") & str_detect(de$DESPID10,"^$|pattern") & str_detect(de$DESPID11,"^$|pattern") & str_detect(de$DESPID12,"^$|pattern") |
 # Reader
 str_detect(de$DESPID07,regex("Reader",ignore_case = T)) & str_detect(de$DESPID01,"^$|pattern") |
-# Length of Sensor Serial Number
-str_detect(de$DESPID07,regex("Reader",ignore_case = T)) &  (str_length(de$DESPID07) != median(str_length(de$DESPID07),na.rm = T)) |
+# Length of Reader Serial Number
+str_detect(de$DESPID07,regex("Reader",ignore_case = T)) &  (str_length(de$DESPID01) != median(str_length(de$DESPID01),na.rm = T)) |
 # Sensor
 (str_detect(de$DESPID08,regex("Sensor",ignore_case = T)) & (str_detect(de$DESPID02,"^$|pattern") | is.na(de$DESPID14) | is.na(de$DESPID15))) |
 # Length Of Sensor Serial Number
